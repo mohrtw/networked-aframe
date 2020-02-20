@@ -1,10 +1,11 @@
 /* global NAF, io */
 
 class WebRtcPeer {
-  constructor(localId, remoteId, sendSignalFunc) {
+  constructor(localId, remoteId, sendSignalFunc, iceServers=null) {
     this.localId = localId;
     this.remoteId = remoteId;
     this.sendSignalFunc = sendSignalFunc;
+    this.ICE_SERVERS = iceServers;
     this.open = false;
     this.channelLabel = "networked-aframe-channel";
 
@@ -116,7 +117,7 @@ class WebRtcPeer {
       );
     }
 
-    var pc = new RTCPeerConnection({ iceServers: WebRtcPeer.ICE_SERVERS });
+    var pc = new RTCPeerConnection({ iceServers: this.ICE_SERVERS || WebRtcPeer.ICE_SERVERS });
 
     pc.onicecandidate = function(event) {
       if (event.candidate) {
@@ -271,7 +272,7 @@ WebRtcPeer.ICE_SERVERS = [
  * networked-scene: serverURL needs to be ws://localhost:8080 when running locally
  */
 class WebrtcAdapter {
-  constructor() {
+  constructor(options=null) {
     if (io === undefined)
       console.warn('It looks like socket.io has not been loaded before WebrtcAdapter. Please do that.')
 
@@ -290,6 +291,10 @@ class WebrtcAdapter {
     this.serverTimeRequests = 0;
     this.timeOffsets = [];
     this.avgTimeOffset = 0;
+    this.iceServers = null;
+    if(options && options.iceServers) {
+      this.iceServers = options.iceServers;
+    }
   }
 
   setServerUrl(wsUrl) {
@@ -432,7 +437,8 @@ class WebrtcAdapter {
             data,
             sending: true,
           });
-        }
+        },
+        this.iceServers
       );
       peer.setDatachannelListeners(
         self.openListener,

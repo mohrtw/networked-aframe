@@ -2,7 +2,7 @@ const WebrtcAdapter = require("./naf-webrtc-adapter");
 const SocketioAdapter = require('./naf-socketio-adapter');
 
 class AdapterFactory {
-  constructor() {
+  constructor(iceServers=null) {
     this.adapters = {
       "socketio": SocketioAdapter,
       "webrtc": WebrtcAdapter,
@@ -11,6 +11,8 @@ class AdapterFactory {
     this.IS_CONNECTED = AdapterFactory.IS_CONNECTED;
     this.CONNECTING = AdapterFactory.CONNECTING;
     this.NOT_CONNECTED = AdapterFactory.NOT_CONNECTED;
+
+    this.options = {iceServers: iceServers}
   }
 
   register(adapterName, AdapterClass) {
@@ -21,7 +23,7 @@ class AdapterFactory {
     var name = adapterName.toLowerCase();
     if (this.adapters[name]) {
       var AdapterClass = this.adapters[name];
-      return new AdapterClass();
+      return new AdapterClass(this.options);
     } else if (name === 'easyrtc' || name == 'wseasyrtc') {
       throw new Error(
         "Adapter: " +
@@ -36,6 +38,10 @@ class AdapterFactory {
           " not registered. Please use NAF.adapters.register() to register this adapter."
       );
     }
+  }
+
+  setIceServers(iceServers) {
+    this.options['iceServers'] = iceServers;
   }
 }
 
